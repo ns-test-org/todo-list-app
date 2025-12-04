@@ -2,43 +2,81 @@
 
 import { useState } from 'react';
 
-interface Todo {
-  id: number;
-  text: string;
-  completed: boolean;
-}
-
-export default function TodoApp() {
-  const [todos, setTodos] = useState<Todo[]>([]);
-  const [inputText, setInputText] = useState('');
+export default function Calculator() {
+  const [display, setDisplay] = useState('0');
+  const [previousValue, setPreviousValue] = useState<number | null>(null);
+  const [operation, setOperation] = useState<string | null>(null);
+  const [waitingForOperand, setWaitingForOperand] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [blueTheme, setBlueTheme] = useState<'ocean' | 'sky' | 'professional'>('ocean');
 
-  const addTodo = () => {
-    if (inputText.trim() !== '') {
-      const newTodo: Todo = {
-        id: Date.now(),
-        text: inputText.trim(),
-        completed: false
-      };
-      setTodos([...todos, newTodo]);
-      setInputText('');
+  const inputNumber = (num: string) => {
+    if (waitingForOperand) {
+      setDisplay(num);
+      setWaitingForOperand(false);
+    } else {
+      setDisplay(display === '0' ? num : display + num);
     }
   };
 
-  const toggleTodo = (id: number) => {
-    setTodos(todos.map(todo =>
-      todo.id === id ? { ...todo, completed: !todo.completed } : todo
-    ));
+  const inputDecimal = () => {
+    if (waitingForOperand) {
+      setDisplay('0.');
+      setWaitingForOperand(false);
+    } else if (display.indexOf('.') === -1) {
+      setDisplay(display + '.');
+    }
   };
 
-  const deleteTodo = (id: number) => {
-    setTodos(todos.filter(todo => todo.id !== id));
+  const clear = () => {
+    setDisplay('0');
+    setPreviousValue(null);
+    setOperation(null);
+    setWaitingForOperand(false);
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      addTodo();
+  const performOperation = (nextOperation: string) => {
+    const inputValue = parseFloat(display);
+
+    if (previousValue === null) {
+      setPreviousValue(inputValue);
+    } else if (operation) {
+      const currentValue = previousValue || 0;
+      const newValue = calculate(currentValue, inputValue, operation);
+
+      setDisplay(String(newValue));
+      setPreviousValue(newValue);
+    }
+
+    setWaitingForOperand(true);
+    setOperation(nextOperation);
+  };
+
+  const calculate = (firstValue: number, secondValue: number, operation: string) => {
+    switch (operation) {
+      case '+':
+        return firstValue + secondValue;
+      case '-':
+        return firstValue - secondValue;
+      case '×':
+        return firstValue * secondValue;
+      case '÷':
+        return firstValue / secondValue;
+      case '=':
+        return secondValue;
+      default:
+        return secondValue;
+    }
+  };
+
+  const handleEquals = () => {
+    const inputValue = parseFloat(display);
+
+    if (previousValue !== null && operation) {
+      const newValue = calculate(previousValue, inputValue, operation);
+      setDisplay(String(newValue));
+      setPreviousValue(null);
+      setOperation(null);
+      setWaitingForOperand(true);
     }
   };
 
@@ -46,74 +84,27 @@ export default function TodoApp() {
     <div className={`min-h-screen py-12 px-4 transition-all duration-500 ${
       isDarkMode 
         ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' 
-        : blueTheme === 'ocean'
-          ? 'bg-gradient-to-br from-blue-50 via-white to-cyan-50'
-          : blueTheme === 'sky'
-            ? 'bg-gradient-to-br from-sky-50 via-white to-blue-50'
-            : 'bg-gradient-to-br from-indigo-50 via-white to-blue-50'
+        : 'bg-gradient-to-br from-blue-50 via-white to-cyan-50'
     }`}>
       {/* Background decoration */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className={`absolute -top-40 -right-40 w-80 h-80 rounded-full opacity-30 blur-3xl transition-all duration-500 ${
           isDarkMode 
             ? 'bg-gradient-to-br from-blue-900/50 to-purple-900/50' 
-            : blueTheme === 'ocean' 
-              ? 'bg-gradient-to-br from-blue-200/60 to-cyan-200/60'
-              : blueTheme === 'sky'
-                ? 'bg-gradient-to-br from-sky-200/60 to-blue-200/60'
-                : 'bg-gradient-to-br from-blue-300/40 to-indigo-300/40'
+            : 'bg-gradient-to-br from-blue-200/60 to-cyan-200/60'
         }`}></div>
         <div className={`absolute -bottom-40 -left-40 w-80 h-80 rounded-full opacity-30 blur-3xl transition-all duration-500 ${
           isDarkMode 
             ? 'bg-gradient-to-tr from-emerald-900/50 to-blue-900/50' 
-            : blueTheme === 'ocean'
-              ? 'bg-gradient-to-tr from-teal-200/60 to-blue-300/60'
-              : blueTheme === 'sky'
-                ? 'bg-gradient-to-tr from-cyan-200/60 to-sky-300/60'
-                : 'bg-gradient-to-tr from-slate-200/40 to-blue-400/40'
+            : 'bg-gradient-to-tr from-teal-200/60 to-blue-300/60'
         }`}></div>
       </div>
 
-      <div className="relative max-w-lg mx-auto">
-        {/* Header with Theme Controls */}
+      <div className="relative max-w-sm mx-auto">
+        {/* Header with Dark Mode Toggle */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-between mb-4">
-            {/* Blue Theme Selector */}
-            {!isDarkMode && (
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setBlueTheme('ocean')}
-                  className={`px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
-                    blueTheme === 'ocean'
-                      ? 'bg-blue-500 text-white shadow-md'
-                      : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                  }`}
-                >
-                  Ocean
-                </button>
-                <button
-                  onClick={() => setBlueTheme('sky')}
-                  className={`px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
-                    blueTheme === 'sky'
-                      ? 'bg-sky-500 text-white shadow-md'
-                      : 'bg-sky-100 text-sky-700 hover:bg-sky-200'
-                  }`}
-                >
-                  Sky
-                </button>
-                <button
-                  onClick={() => setBlueTheme('professional')}
-                  className={`px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
-                    blueTheme === 'professional'
-                      ? 'bg-indigo-600 text-white shadow-md'
-                      : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
-                  }`}
-                >
-                  Pro
-                </button>
-              </div>
-            )}
-            {isDarkMode && <div></div>}
+            <div></div>
             
             <button
               onClick={() => setIsDarkMode(!isDarkMode)}
@@ -139,23 +130,15 @@ export default function TodoApp() {
           <h1 className={`text-4xl font-bold mb-2 transition-all duration-500 ${
             isDarkMode
               ? 'bg-gradient-to-r from-slate-200 via-white to-slate-200 bg-clip-text text-transparent'
-              : blueTheme === 'ocean'
-                ? 'bg-gradient-to-r from-blue-700 via-blue-600 to-cyan-600 bg-clip-text text-transparent'
-                : blueTheme === 'sky'
-                  ? 'bg-gradient-to-r from-sky-700 via-sky-600 to-blue-600 bg-clip-text text-transparent'
-                  : 'bg-gradient-to-r from-indigo-700 via-blue-700 to-blue-600 bg-clip-text text-transparent'
+              : 'bg-gradient-to-r from-blue-700 via-blue-600 to-cyan-600 bg-clip-text text-transparent'
           }`}>
-            Tasks
+            Calculator
           </h1>
           <p className={`text-sm font-medium transition-colors duration-500 ${
             isDarkMode 
               ? 'text-slate-400' 
-              : blueTheme === 'ocean'
-                ? 'text-blue-600'
-                : blueTheme === 'sky'
-                  ? 'text-sky-600'
-                  : 'text-indigo-600'
-          }`}>Stay organized, stay productive</p>
+              : 'text-blue-600'
+          }`}>Simple & elegant calculations</p>
         </div>
 
         {/* Main card */}
@@ -341,6 +324,8 @@ export default function TodoApp() {
     </div>
   );
 }
+
+
 
 
 
