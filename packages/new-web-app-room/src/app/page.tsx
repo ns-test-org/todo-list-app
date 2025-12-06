@@ -2,43 +2,94 @@
 
 import { useState } from 'react';
 
-interface Todo {
-  id: number;
-  text: string;
-  completed: boolean;
-}
+export default function Calculator() {
+  const [display, setDisplay] = useState('0');
+  const [previousValue, setPreviousValue] = useState<number | null>(null);
+  const [operation, setOperation] = useState<string | null>(null);
+  const [waitingForOperand, setWaitingForOperand] = useState(false);
 
-export default function TodoApp() {
-  const [todos, setTodos] = useState<Todo[]>([]);
-  const [inputText, setInputText] = useState('');
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [blueTheme, setBlueTheme] = useState<'ocean' | 'sky' | 'professional'>('ocean');
-
-  const addTodo = () => {
-    if (inputText.trim() !== '') {
-      const newTodo: Todo = {
-        id: Date.now(),
-        text: inputText.trim(),
-        completed: false
-      };
-      setTodos([...todos, newTodo]);
-      setInputText('');
+  const inputDigit = (digit: string) => {
+    if (waitingForOperand) {
+      setDisplay(digit);
+      setWaitingForOperand(false);
+    } else {
+      setDisplay(display === '0' ? digit : display + digit);
     }
   };
 
-  const toggleTodo = (id: number) => {
-    setTodos(todos.map(todo =>
-      todo.id === id ? { ...todo, completed: !todo.completed } : todo
-    ));
+  const inputDecimal = () => {
+    if (waitingForOperand) {
+      setDisplay('0.');
+      setWaitingForOperand(false);
+    } else if (display.indexOf('.') === -1) {
+      setDisplay(display + '.');
+    }
   };
 
-  const deleteTodo = (id: number) => {
-    setTodos(todos.filter(todo => todo.id !== id));
+  const clear = () => {
+    setDisplay('0');
+    setPreviousValue(null);
+    setOperation(null);
+    setWaitingForOperand(false);
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      addTodo();
+  const performOperation = (nextOperation: string) => {
+    const inputValue = parseFloat(display);
+
+    if (previousValue === null) {
+      setPreviousValue(inputValue);
+    } else if (operation) {
+      const currentValue = previousValue || 0;
+      let newValue = currentValue;
+
+      switch (operation) {
+        case '+':
+          newValue = currentValue + inputValue;
+          break;
+        case '-':
+          newValue = currentValue - inputValue;
+          break;
+        case '×':
+          newValue = currentValue * inputValue;
+          break;
+        case '÷':
+          newValue = currentValue / inputValue;
+          break;
+      }
+
+      setDisplay(String(newValue));
+      setPreviousValue(newValue);
+    }
+
+    setWaitingForOperand(true);
+    setOperation(nextOperation);
+  };
+
+  const handleEquals = () => {
+    const inputValue = parseFloat(display);
+
+    if (previousValue !== null && operation) {
+      let newValue = previousValue;
+
+      switch (operation) {
+        case '+':
+          newValue = previousValue + inputValue;
+          break;
+        case '-':
+          newValue = previousValue - inputValue;
+          break;
+        case '×':
+          newValue = previousValue * inputValue;
+          break;
+        case '÷':
+          newValue = previousValue / inputValue;
+          break;
+      }
+
+      setDisplay(String(newValue));
+      setPreviousValue(null);
+      setOperation(null);
+      setWaitingForOperand(true);
     }
   };
 
@@ -341,6 +392,7 @@ export default function TodoApp() {
     </div>
   );
 }
+
 
 
 
