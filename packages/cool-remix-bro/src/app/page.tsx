@@ -1,84 +1,142 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
-const slogans = [
-  "Turn chats into apps",
-  "Prompt. Ship. Repeat.",
-  "Build anything from a chat",
-  "Ideas → Apps, instantly",
-  "From zero to MVP in minutes",
-  "Your cofounder in the command line",
-  "Draft, iterate, deploy",
-  "Ship faster than you can type",
-  "Design in text, deliver in code",
-  "Dream it. Prompt it. Run it.",
-  "Chat-native app building",
-  "From prompt to product",
-  "One prompt, infinite apps",
-  "Stop scaffolding. Start shipping.",
-  "Prototype at the speed of thought",
-  "Make conversations executable"
-];
+export default function Calculator() {
+  const [display, setDisplay] = useState('0');
+  const [previousValue, setPreviousValue] = useState<number | null>(null);
+  const [operation, setOperation] = useState<string | null>(null);
+  const [newNumber, setNewNumber] = useState(true);
 
-export default function Landing() {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isVisible, setIsVisible] = useState(true);
+  const handleNumber = (num: string) => {
+    if (newNumber) {
+      setDisplay(num);
+      setNewNumber(false);
+    } else {
+      setDisplay(display === '0' ? num : display + num);
+    }
+  };
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setIsVisible(false);
-      setTimeout(() => {
-        setCurrentIndex((prev) => (prev + 1) % slogans.length);
-        setIsVisible(true);
-      }, 400);
-    }, 2800);
+  const handleOperation = (op: string) => {
+    const current = parseFloat(display);
+    
+    if (previousValue === null) {
+      setPreviousValue(current);
+    } else if (operation) {
+      const result = calculate(previousValue, current, operation);
+      setDisplay(String(result));
+      setPreviousValue(result);
+    }
+    
+    setOperation(op);
+    setNewNumber(true);
+  };
 
-    return () => clearInterval(interval);
-  }, []);
+  const calculate = (a: number, b: number, op: string): number => {
+    switch (op) {
+      case '+': return a + b;
+      case '-': return a - b;
+      case '×': return a * b;
+      case '÷': return b !== 0 ? a / b : 0;
+      default: return b;
+    }
+  };
+
+  const handleEquals = () => {
+    if (operation && previousValue !== null) {
+      const current = parseFloat(display);
+      const result = calculate(previousValue, current, operation);
+      setDisplay(String(result));
+      setPreviousValue(null);
+      setOperation(null);
+      setNewNumber(true);
+    }
+  };
+
+  const handleClear = () => {
+    setDisplay('0');
+    setPreviousValue(null);
+    setOperation(null);
+    setNewNumber(true);
+  };
+
+  const handleDecimal = () => {
+    if (newNumber) {
+      setDisplay('0.');
+      setNewNumber(false);
+    } else if (!display.includes('.')) {
+      setDisplay(display + '.');
+    }
+  };
 
   return (
-    <div className="relative h-[100dvh] w-full overflow-hidden bg-black text-white">
-      {/* Enhanced animated aurora background layers */}
-      <div className="absolute inset-0 bg-aurora-layer-1" />
-      <div className="absolute inset-0 bg-aurora-layer-2" />
-      <div className="absolute inset-0 bg-aurora-layer-3" />
-      
-      {/* Floating particles overlay */}
-      <div className="absolute inset-0 bg-particles" />
-      
-      {/* Main content - centered */}
-      <main className="relative z-10 h-full flex flex-col items-center justify-center px-6">
-        <h1 className="text-center text-[clamp(28px,6vw,64px)] font-medium tracking-tight mb-4">
-          Turn Chats into Apps
-        </h1>
-        
-        {/* Rotating slogans */}
-        <div className="mt-4 h-8 md:h-10 overflow-hidden flex items-center justify-center">
-          <span
-            className={`inline-block text-center text-[clamp(18px,3vw,32px)] font-light transition-all duration-[400ms] ease-in-out ${
-              isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'
-            }`}
-          >
-            {slogans[currentIndex]}
-          </span>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
+      <div className="bg-slate-800/50 backdrop-blur-lg rounded-3xl shadow-2xl p-6 w-full max-w-sm border border-slate-700/50">
+        <div className="bg-slate-900/80 rounded-2xl p-6 mb-6 min-h-[100px] flex items-end justify-end">
+          <div className="text-5xl font-light text-white break-all text-right">
+            {display}
+          </div>
         </div>
-      </main>
-      
-      {/* Start Prompting arrow pointing left - bottom left */}
-      <div className="absolute left-6 md:left-8 bottom-[5%] z-20 flex items-center gap-3 arrow-point-left">
-        <div className="flex items-center gap-2 text-white/80 font-medium text-sm md:text-base">
-          <svg 
-            className="w-5 h-5 md:w-6 md:h-6 animate-bounce-horizontal" 
-            fill="none" 
-            viewBox="0 0 24 24" 
-            stroke="currentColor"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          <span>Start prompting</span>
+        
+        <div className="grid grid-cols-4 gap-3">
+          <button onClick={handleClear} className="col-span-2 bg-red-500/80 hover:bg-red-600 text-white rounded-xl p-6 text-xl font-semibold transition-all active:scale-95">
+            AC
+          </button>
+          <button onClick={() => handleOperation('÷')} className="bg-orange-500/80 hover:bg-orange-600 text-white rounded-xl p-6 text-2xl font-semibold transition-all active:scale-95">
+            ÷
+          </button>
+          <button onClick={() => handleOperation('×')} className="bg-orange-500/80 hover:bg-orange-600 text-white rounded-xl p-6 text-2xl font-semibold transition-all active:scale-95">
+            ×
+          </button>
+          
+          <button onClick={() => handleNumber('7')} className="bg-slate-700/80 hover:bg-slate-600 text-white rounded-xl p-6 text-2xl font-semibold transition-all active:scale-95">
+            7
+          </button>
+          <button onClick={() => handleNumber('8')} className="bg-slate-700/80 hover:bg-slate-600 text-white rounded-xl p-6 text-2xl font-semibold transition-all active:scale-95">
+            8
+          </button>
+          <button onClick={() => handleNumber('9')} className="bg-slate-700/80 hover:bg-slate-600 text-white rounded-xl p-6 text-2xl font-semibold transition-all active:scale-95">
+            9
+          </button>
+          <button onClick={() => handleOperation('-')} className="bg-orange-500/80 hover:bg-orange-600 text-white rounded-xl p-6 text-2xl font-semibold transition-all active:scale-95">
+            −
+          </button>
+          
+          <button onClick={() => handleNumber('4')} className="bg-slate-700/80 hover:bg-slate-600 text-white rounded-xl p-6 text-2xl font-semibold transition-all active:scale-95">
+            4
+          </button>
+          <button onClick={() => handleNumber('5')} className="bg-slate-700/80 hover:bg-slate-600 text-white rounded-xl p-6 text-2xl font-semibold transition-all active:scale-95">
+            5
+          </button>
+          <button onClick={() => handleNumber('6')} className="bg-slate-700/80 hover:bg-slate-600 text-white rounded-xl p-6 text-2xl font-semibold transition-all active:scale-95">
+            6
+          </button>
+          <button onClick={() => handleOperation('+')} className="bg-orange-500/80 hover:bg-orange-600 text-white rounded-xl p-6 text-2xl font-semibold transition-all active:scale-95">
+            +
+          </button>
+          
+          <button onClick={() => handleNumber('1')} className="bg-slate-700/80 hover:bg-slate-600 text-white rounded-xl p-6 text-2xl font-semibold transition-all active:scale-95">
+            1
+          </button>
+          <button onClick={() => handleNumber('2')} className="bg-slate-700/80 hover:bg-slate-600 text-white rounded-xl p-6 text-2xl font-semibold transition-all active:scale-95">
+            2
+          </button>
+          <button onClick={() => handleNumber('3')} className="bg-slate-700/80 hover:bg-slate-600 text-white rounded-xl p-6 text-2xl font-semibold transition-all active:scale-95">
+            3
+          </button>
+          <button onClick={handleEquals} className="row-span-2 bg-green-500/80 hover:bg-green-600 text-white rounded-xl p-6 text-2xl font-semibold transition-all active:scale-95">
+            =
+          </button>
+          
+          <button onClick={() => handleNumber('0')} className="col-span-2 bg-slate-700/80 hover:bg-slate-600 text-white rounded-xl p-6 text-2xl font-semibold transition-all active:scale-95">
+            0
+          </button>
+          <button onClick={handleDecimal} className="bg-slate-700/80 hover:bg-slate-600 text-white rounded-xl p-6 text-2xl font-semibold transition-all active:scale-95">
+            .
+          </button>
         </div>
       </div>
     </div>
   );
 }
+
